@@ -16,6 +16,7 @@
 RCT_EXPORT_VIEW_PROPERTY(aspect, NSString);
 RCT_EXPORT_VIEW_PROPERTY(type, NSInteger);
 RCT_EXPORT_VIEW_PROPERTY(orientation, NSInteger);
+RCT_EXPORT_VIEW_PROPERTY(isRecording, NSString);
 
 - (NSDictionary *)constantsToExport
 {
@@ -65,5 +66,14 @@ RCT_EXPORT_VIEW_PROPERTY(orientation, NSInteger);
     [_currentCamera takePicture:callback];
 }
 
+- (void)startRecording {
+    RCT_EXPORT();
+    [_currentCamera startRecording];
+}
+
+- (void)stopRecording {
+    RCT_EXPORT();
+    [_currentCamera stopRecording];
+}
 
 @end

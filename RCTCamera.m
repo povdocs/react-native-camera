@@ -9,6 +9,12 @@
 
 @implementation RCTCamera
 
+- (BOOL)getRecording
+{
+    //todo: return [[self session] isRunning];
+    return _isRecording;
+}
+
 - (void)setAspect:(NSString *)aspect
 {
     [(AVCaptureVideoPreviewLayer *)[[self viewfinder] layer] setVideoGravity:aspect];
@@ -31,6 +37,8 @@
 
 - (id)init
 {
+    _isRecording = NO;
+
     if ((self = [super init])) {
         [self setViewfinder:[[ViewfinderView alloc] init]];
 
@@ -54,6 +62,7 @@
                 presetCamera = AVCaptureDevicePositionBack;
             }
 
+            //Set up video capture device
             AVCaptureDevice *captureDevice = [self deviceWithMediaType:AVMediaTypeVideo preferringPosition:presetCamera];
             AVCaptureDeviceInput *captureDeviceInput = [AVCaptureDeviceInput deviceInputWithDevice:captureDevice error:&error];
 
@@ -68,12 +77,43 @@
                 [self setCaptureDeviceInput:captureDeviceInput];
             }
 
+            //Set up audio capture device
+            //todo: don't do this until we need it?
+            AVCaptureDevice *audioDevice = [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeAudio];
+
+            AVCaptureDeviceInput *audioDeviceInput = [AVCaptureDeviceInput deviceInputWithDevice:audioDevice error:&error];
+            
+            if (error)
+            {
+                NSLog(@"%@", error);
+            }
+            
+            if ([[self session] canAddInput:audioDeviceInput])
+            {
+                [[self session] addInput:audioDeviceInput];
+                [self setAudioDeviceInput:audioDeviceInput];
+            }
+            
+            //set up still image capture output
             AVCaptureStillImageOutput *stillImageOutput = [[AVCaptureStillImageOutput alloc] init];
             if ([[self session] canAddOutput:stillImageOutput])
             {
                 [stillImageOutput setOutputSettings:@{AVVideoCodecKey : AVVideoCodecJPEG}];
                 [[self session] addOutput:stillImageOutput];
                 [self setStillImageOutput:stillImageOutput];
+            }
+            
+            //set up movie output
+            AVCaptureMovieFileOutput *movieFileOutput = [[AVCaptureMovieFileOutput alloc] init];
+            
+            Float64 totalSeconds = 60.0;
+            int32_t preferredTimeScale = 30; //Frames per second
+            CMTime maxDuration = CMTimeMakeWithSeconds(totalSeconds, preferredTimeScale);
+            movieFileOutput.maxRecordedDuration = maxDuration;
+
+            if ([[self session] canAddOutput:movieFileOutput]) {
+                [[self session] addOutput:movieFileOutput];
+                [self setMovieFileOutput:movieFileOutput];
             }
 
             __weak RCTCamera *weakSelf = self;
@@ -153,6 +193,12 @@
 
 - (void)changeOrientation:(NSInteger)orientation {
     [[(AVCaptureVideoPreviewLayer *)[[self viewfinder] layer] connection] setVideoOrientation:orientation];
+
+    AVCaptureConnection *captureConnection = [[self movieFileOutput] connectionWithMediaType:AVMediaTypeVideo];
+    
+    if ([captureConnection isVideoOrientationSupported]) {
+        [captureConnection setVideoOrientation:orientation];
+    }
 }
 
 - (void)takePicture:(RCTResponseSenderBlock)callback {
@@ -182,6 +228,42 @@
     });
 }
 
+- (void)startRecording
+{
+    if (_isRecording) {
+        return;
+    }
+    
+    NSLog(@"start recording");
+    //todo: fire event
+    _isRecording = YES;
+
+    //create temporary url as recording destination
+    //todo: get recording destination from a param
+    NSString *outputPath = [[NSString alloc] initWithFormat:@"%@%s", NSTemporaryDirectory(), "@output.mov"];
+    NSURL *outputURL = [[NSURL alloc] initFileURLWithPath:outputPath];
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    if ([fileManager fileExistsAtPath:outputPath]) {
+        NSError *error;
+        if ([fileManager removeItemAtPath:outputPath error:&error] ==NO) {
+            //todo: handle error if necessary
+        }
+    }
+    
+    //start recording
+    [[self movieFileOutput] startRecordingToOutputFileURL:outputURL recordingDelegate:self];
+}
+
+- (void)stopRecording
+{
+    if (!_isRecording) {
+        return;
+    }
+    
+    NSLog(@"Stop recording");
+    _isRecording = NO;
+    [[self movieFileOutput] stopRecording];
+}
 
 - (AVCaptureDevice *)deviceWithMediaType:(NSString *)mediaType preferringPosition:(AVCaptureDevicePosition)position
 {
@@ -250,5 +332,35 @@
         }
     });
 }
+
+- (void) captureOutput:(AVCaptureFileOutput *)captureOutput didFinishRecordingToOutputFileAtURL:(NSURL *)outputFileURL fromConnections:(NSArray *)connections error:(NSError *)error
+{
+
+    _isRecording = NO;
+
+    BOOL recordedSuccessfully = YES;
+    if ([error code] != noErr) {
+        //something went wrong. check if recording was successful
+        id value = [[error userInfo] objectForKey:AVErrorRecordingSuccessfullyFinishedKey];
+        if (value) {
+            recordedSuccessfully = [value boolValue];
+        }
+    }
+    
+    if (recordedSuccessfully) {
+        ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
+        if ([library videoAtPathIsCompatibleWithSavedPhotosAlbum:outputFileURL]) {
+            [library writeVideoAtPathToSavedPhotosAlbum:outputFileURL completionBlock:^(NSURL *assetURL, NSError *error)
+             {
+                 if (error) {
+                     //todo: handle write error
+                 }
+                 
+                 //todo: send event back to JS
+             }];
+        }
+    }
+}
+
 
 @end

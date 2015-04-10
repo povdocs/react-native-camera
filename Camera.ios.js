@@ -63,6 +63,14 @@ var Camera = React.createClass({
 
   takePicture: function(cb) {
     NativeModules.CameraManager.takePicture(cb);
+  },
+
+  startRecording: function(cb) {
+    NativeModules.CameraManager.startRecording();
+  },
+
+  stopRecording: function(cb) {
+    NativeModules.CameraManager.stopRecording();
   }
 });
 
