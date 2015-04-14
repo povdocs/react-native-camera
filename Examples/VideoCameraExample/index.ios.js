@@ -10,24 +10,55 @@ var {
   StyleSheet,
   Text,
   View,
+  SwitchIOS
 } = React;
 
+var Button = require('react-native-button');
+var Camera = require('react-native-camera');
 var VideoCameraExample = React.createClass({
-  render: function() {
+  getInitialState() {
+    return {
+      frontCamera: true
+    };
+  },
+  render() {
     return (
-      <View style={styles.container}>
-        <Text style={styles.welcome}>
-          Welcome to React Native!
-        </Text>
-        <Text style={styles.instructions}>
-          To get started, edit index.ios.js
-        </Text>
-        <Text style={styles.instructions}>
-          Press Cmd+R to reload,{'\n'}
-          Cmd+Control+Z for dev menu
-        </Text>
+      <View>
+        <View>
+          <Camera
+            ref="cam"
+            aspect="Fit"
+            type={this.state.frontCamera ? 'Front' : 'Back'}
+            orientation="PortraitUpsideDown"
+            style={{height: 300, width: 300, backgroundColor: 'blue'}}
+          />
+        </View>
+        <SwitchIOS
+          onValueChange={(value) => this.setCamera(value)}
+          value={this.state.frontCamera}
+          ref="switch" />
+        <Button style={{color: 'green', padding: 20, margin: 10}} onPress={this.start}>
+         Start
+        </Button>
+        <Button style={{color: 'red', padding: 20, margin: 10}} onPress={this.stop}>
+         Stop
+        </Button>
       </View>
     );
+  },
+  setCamera: function(val) {
+    this.setState({frontCamera: val});
+  },
+  _takePicture() {
+    this.refs.cam.takePicture(function (err, base64EncodedJpeg) {
+      // body...
+    });
+  },
+  start() {
+    this.refs.cam.startRecording();
+  },
+  stop() {
+    this.refs.cam.stopRecording();
   }
 });
 
