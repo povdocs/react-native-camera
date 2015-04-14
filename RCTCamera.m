@@ -9,9 +9,10 @@
 
 @implementation RCTCamera
 
-- (BOOL)getIsRecording
+- (BOOL)getRecording
 {
-    return [[self session] isRunning];
+    //todo: return [[self session] isRunning];
+    return _isRecording;
 }
 
 - (void)setAspect:(NSString *)aspect
@@ -36,6 +37,8 @@
 
 - (id)init
 {
+    _isRecording = NO;
+
     if ((self = [super init])) {
         [self setViewfinder:[[ViewfinderView alloc] init]];
 
@@ -227,12 +230,13 @@
 
 - (void)startRecording
 {
-    if ([self isRecording]) {
+    if (_isRecording) {
         return;
     }
     
     NSLog(@"start recording");
     //todo: fire event
+    _isRecording = YES;
 
     //create temporary url as recording destination
     //todo: get recording destination from a param
@@ -252,11 +256,12 @@
 
 - (void)stopRecording
 {
-    if (![self isRecording]) {
+    if (!_isRecording) {
         return;
     }
     
     NSLog(@"Stop recording");
+    _isRecording = NO;
     [[self movieFileOutput] stopRecording];
 }
 
@@ -330,6 +335,8 @@
 
 - (void) captureOutput:(AVCaptureFileOutput *)captureOutput didFinishRecordingToOutputFileAtURL:(NSURL *)outputFileURL fromConnections:(NSArray *)connections error:(NSError *)error
 {
+
+    _isRecording = NO;
 
     BOOL recordedSuccessfully = YES;
     if ([error code] != noErr) {
