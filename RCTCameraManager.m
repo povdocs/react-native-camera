@@ -16,6 +16,7 @@
 RCT_EXPORT_VIEW_PROPERTY(aspect, NSString);
 RCT_EXPORT_VIEW_PROPERTY(type, NSInteger);
 RCT_EXPORT_VIEW_PROPERTY(orientation, NSInteger);
+RCT_EXPORT_VIEW_PROPERTY(frameRate, float);
 RCT_EXPORT_VIEW_PROPERTY(isRecording, NSString);
 
 - (NSDictionary *)constantsToExport

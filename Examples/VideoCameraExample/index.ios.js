@@ -10,7 +10,8 @@ var {
   StyleSheet,
   Text,
   View,
-  SwitchIOS
+  SwitchIOS,
+  SliderIOS
 } = React;
 
 var Button = require('react-native-button');
@@ -18,10 +19,15 @@ var Camera = require('react-native-camera');
 var VideoCameraExample = React.createClass({
   getInitialState() {
     return {
-      frontCamera: true
+      frontCamera: true,
+      frameRate: 24
     };
   },
   render() {
+    /*
+    todo: set SliderIOS range to 0-60, once min/max value are supported
+    https://github.com/facebook/react-native/pull/583/
+    */
     return (
       <View>
         <View>
@@ -30,13 +36,17 @@ var VideoCameraExample = React.createClass({
             aspect="Fit"
             type={this.state.frontCamera ? 'Front' : 'Back'}
             orientation="PortraitUpsideDown"
+            frameRate={this.state.frameRate}
             style={{height: 300, width: 300, backgroundColor: 'blue'}}
           />
         </View>
         <SwitchIOS
-          onValueChange={(value) => this.setCamera(value)}
+          onValueChange={(value) => this.updateState({frontCamera: value})}
           value={this.state.frontCamera}
           ref="switch" />
+        <SliderIOS
+          value={this.state.frameRate / 60}
+          onSlidingComplete={(value) => this.updateState({frameRate: value * 60})} />
         <Button style={{color: 'green', padding: 20, margin: 10}} onPress={this.start}>
          Start
         </Button>
@@ -46,8 +56,8 @@ var VideoCameraExample = React.createClass({
       </View>
     );
   },
-  setCamera: function(val) {
-    this.setState({frontCamera: val});
+  updateState: function(newState) {
+    this.setState(newState);
   },
   _takePicture() {
     this.refs.cam.takePicture(function (err, base64EncodedJpeg) {

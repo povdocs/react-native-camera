@@ -9,9 +9,8 @@
 
 @implementation RCTCamera
 
-- (BOOL)getRecording
+- (BOOL)getIsRecording
 {
-    //todo: return [[self session] isRunning];
     return _isRecording;
 }
 
@@ -22,7 +21,7 @@
 
 - (void)setType:(NSInteger)camera
 {
-    if ([[self session] isRunning]) {
+    if ([[self session] isRunning] && !_isRecording) {
         [self changeCamera:camera];
     }
     else {
@@ -33,6 +32,29 @@
 - (void)setOrientation:(NSInteger)orientation
 {
     [self changeOrientation:orientation];
+}
+
+- (void)setFrameRate:(float)frameRate
+{
+    _frameRate = frameRate;
+    if ([[self session] isRunning] && !_isRecording) {
+        [self changeFrameRate:frameRate];
+    }
+}
+
+- (float)getCurrentFrameRate
+{
+    AVCaptureDeviceInput *input = [self captureDeviceInput];
+    if (input != nil) {
+        AVCaptureDevice *camera = [input device];
+        if (camera != nil) {
+            float min = CMTimeGetSeconds(camera.activeVideoMinFrameDuration);
+            float max = CMTimeGetSeconds(camera.activeVideoMaxFrameDuration);
+            return 2.0 / (min + max);
+        }
+    }
+
+    return _frameRate;
 }
 
 - (id)init
@@ -153,6 +175,60 @@
     return;
 }
 
+- (void)changeFrameRate:(float)frameRate {
+    dispatch_async([self sessionQueue], ^{
+        NSError *error;
+        AVCaptureDevice *camera = [[self captureDeviceInput] device];
+        if (![camera lockForConfiguration:&error]) {
+            NSLog(@"Could not lock device %@ for configuration: %@", camera, error);
+            return;
+        }
+
+        float oldFrameRate = [self getCurrentFrameRate];
+        const float epsilon = 0.00002;
+        if (ABS(oldFrameRate - frameRate)) {
+            //no need to go through all this business
+            return;
+        }
+
+        AVCaptureDeviceFormat *format = [camera activeFormat];
+        CMTime high = kCMTimeZero;
+        CMTime low = kCMTimeIndefinite;
+        CMTime desiredDuration = CMTimeMultiplyByFloat64(CMTimeMake(1, 1), 1.0 / frameRate);
+        CMTime frameDuration = desiredDuration;
+
+        for (AVFrameRateRange *range in format.videoSupportedFrameRateRanges) {
+
+            low = CMTimeMinimum(low, range.minFrameDuration);
+            high = CMTimeMaximum(high, range.maxFrameDuration);
+
+            if (CMTimeCompare(low, desiredDuration) <= 0 && CMTimeCompare(high, desiredDuration) >= 0) {
+                frameDuration = desiredDuration;
+                break;
+            } else {
+                CMTime lowDiff = CMTimeAbsoluteValue(CMTimeSubtract(low, desiredDuration));
+                CMTime highDiff = CMTimeAbsoluteValue(CMTimeSubtract(high, desiredDuration));
+                if (CMTimeCompare(lowDiff, highDiff) < 0) {
+                    frameDuration = low;
+                } else {
+                    frameDuration = high;
+                }
+            }
+        }
+
+        camera.activeVideoMaxFrameDuration = frameDuration;
+        camera.activeVideoMinFrameDuration = frameDuration;
+
+        float newFrameRate = 1.0 / CMTimeGetSeconds(frameDuration);
+        if (ABS(newFrameRate - oldFrameRate) > epsilon) {
+            NSLog(@"Frame rate changed from %f to %f", oldFrameRate, newFrameRate);
+            //todo: fire frameRateChanged event
+        }
+
+        [camera unlockForConfiguration];
+    });
+}
+
 - (void)changeCamera:(NSInteger)camera {
     dispatch_async([self sessionQueue], ^{
         AVCaptureDevice *currentCaptureDevice = [[self captureDeviceInput] device];
@@ -188,6 +264,7 @@
 
 
         [[self session] commitConfiguration];
+        [self changeFrameRate:_frameRate];
     });
 }
 

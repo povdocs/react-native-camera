@@ -14,6 +14,7 @@ var Camera = React.createClass({
     aspect: PropTypes.string,
     type: PropTypes.string,
     orientation: PropTypes.string,
+    frameRate: PropTypes.number
   },
 
   mixins: [NativeMethodsMixin],
@@ -39,15 +40,17 @@ var Camera = React.createClass({
   render: function() {
     var style = flattenStyle([styles.base, this.props.style]);
 
-    aspect = NativeModules.CameraManager.aspects[this.props.aspect || 'Fill'];
-    type = NativeModules.CameraManager.cameras[this.props.type ||'Back'];
-    orientation = NativeModules.CameraManager.orientations[this.props.orientation || 'Portrait'];
+    var aspect = NativeModules.CameraManager.aspects[this.props.aspect || 'Fill'];
+    var type = NativeModules.CameraManager.cameras[this.props.type ||'Back'];
+    var orientation = NativeModules.CameraManager.orientations[this.props.orientation || 'Portrait'];
+    var frameRate = this.props.frameRate > 0 ? this.props.frameRate : 25;
 
     var nativeProps = merge(this.props, {
       style,
       aspect: aspect,
       type: type,
       orientation: orientation,
+      frameRate: frameRate
     });
 
     return <RCTCamera {... nativeProps} />
@@ -70,7 +73,8 @@ var RCTCamera = createReactIOSNativeComponentClass({
   validAttributes: merge(ReactIOSViewAttributes.UIView, {
     aspect: true,
     type: true,
-    orientation: true
+    orientation: true,
+    frameRate: true
   }),
   uiViewClassName: 'RCTCamera',
 });
