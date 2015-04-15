@@ -41,6 +41,7 @@ var VideoCameraExample = React.createClass({
             onRecordStart={this.recordStart}
             onRecordEnd={this.recordEnd}
             onFrameRateChange={(evt) => console.log('onFrameRateChange', evt)}
+            maxDuration={20.2}
           />
         </View>
         <SwitchIOS

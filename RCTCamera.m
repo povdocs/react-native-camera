@@ -51,6 +51,32 @@ NSString *const RNCameraEventFrameRateChange = @"frameRateChange";
     }
 }
 
+- (void)setMaxDuration:(double)duration
+{
+    dispatch_async([self sessionQueue], ^{
+        CMTime maxDuration;
+        AVCaptureFileOutput *movieFileOutput = [self movieFileOutput];
+        if (movieFileOutput != nil) {
+            if (duration <= 0.0) {
+                maxDuration = kCMTimeInvalid;
+            } else {
+                maxDuration = CMTimeMakeWithSeconds(duration, 1);
+            }
+            movieFileOutput.maxRecordedDuration = maxDuration;
+        }
+    });
+}
+
+- (void)setMaxFileSize:(NSInteger)size
+{
+    dispatch_async([self sessionQueue], ^{
+        AVCaptureFileOutput *movieFileOutput = [self movieFileOutput];
+        if (movieFileOutput != nil && size >= 0) {
+            movieFileOutput.maxRecordedFileSize = size;
+        }
+    });
+}
+
 - (double)getCurrentFrameRate
 {
     AVCaptureDeviceInput *input = [self captureDeviceInput];
@@ -139,10 +165,7 @@ NSString *const RNCameraEventFrameRateChange = @"frameRateChange";
             //set up movie output
             AVCaptureMovieFileOutput *movieFileOutput = [[AVCaptureMovieFileOutput alloc] init];
             
-            Float64 totalSeconds = 60.0;
-            int32_t preferredTimeScale = 30; //Frames per second
-            CMTime maxDuration = CMTimeMakeWithSeconds(totalSeconds, preferredTimeScale);
-            movieFileOutput.maxRecordedDuration = maxDuration;
+            movieFileOutput.maxRecordedDuration = kCMTimeInvalid;
 
             if ([[self session] canAddOutput:movieFileOutput]) {
                 [[self session] addOutput:movieFileOutput];
@@ -455,11 +478,15 @@ NSString *const RNCameraEventFrameRateChange = @"frameRateChange";
     }
     
     if (recordedSuccessfully) {
+        NSLog(@"Recorded successfully, %f seconds, %lld bytes", CMTimeGetSeconds([captureOutput recordedDuration]), [captureOutput recordedFileSize]);
         [_eventDispatcher
          sendInputEventWithName:RNCameraEventRecordEnd
          body:@{
                 //todo: fill in data here. destination file name, maybe? duration
-                @"target": self.reactTag
+                @"target": self.reactTag,
+                @"outputURL": [outputFileURL absoluteString],
+                @"duration": [captureOutput recordedDuration],
+                @"fileSize": [captureOutput recordedFileSize]
         }];
 
         ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
@@ -471,10 +498,12 @@ NSString *const RNCameraEventFrameRateChange = @"frameRateChange";
                  }
                  
                  //todo: send event back to JS
+                 NSLog(@"File saved: %@", [assetURL absoluteString]);
              }];
         }
     } else {
         //todo: fire error event?
+        NSLog(@"Error recording: %d, %@", [error code], error);
     }
 }
 

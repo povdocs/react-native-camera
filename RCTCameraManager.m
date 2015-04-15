@@ -19,6 +19,8 @@ RCT_EXPORT_VIEW_PROPERTY(aspect, NSString);
 RCT_EXPORT_VIEW_PROPERTY(type, NSInteger);
 RCT_EXPORT_VIEW_PROPERTY(orientation, NSInteger);
 RCT_EXPORT_VIEW_PROPERTY(frameRate, double);
+RCT_EXPORT_VIEW_PROPERTY(maxDuration, double);
+RCT_EXPORT_VIEW_PROPERTY(maxFileSize, NSInteger);
 RCT_EXPORT_VIEW_PROPERTY(isRecording, NSString);
 
 - (NSDictionary *)constantsToExport

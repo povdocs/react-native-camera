@@ -15,6 +15,8 @@ var Camera = React.createClass({
     type: PropTypes.string,
     orientation: PropTypes.string,
     frameRate: PropTypes.number,
+    maxDuration: React.PropTypes.number,
+    maxFileSize: React.PropTypes.number,
     onRecordStart: PropTypes.func,
     onRecordEnd: PropTypes.func,
     onFrameRateChange: PropTypes.func
@@ -47,16 +49,25 @@ var Camera = React.createClass({
     var type = NativeModules.CameraManager.cameras[this.props.type ||'Back'];
     var orientation = NativeModules.CameraManager.orientations[this.props.orientation || 'Portrait'];
     var frameRate = this.props.frameRate > 0 ? this.props.frameRate : 25;
+    var maxFileSize = this.props.maxFileSize || 0;
+    var maxDuration = this.props.maxDuration || 0;
+
+    if (maxDuration === Infinity) {
+      maxDuration = 0;
+    }
 
     var nativeProps = merge(this.props, {
       style,
-      aspect: aspect,
-      type: type,
-      orientation: orientation,
-      frameRate: frameRate,
+      aspect,
+      type,
+      orientation,
+      frameRate,
+      maxFileSize,
+      maxDuration,
+
       onRecordStart: this.onRecordStart,
       onRecordEnd: this.onRecordEnd,
-      onFrameRateChange: this.onFrameRateChange
+      onFrameRateChange: this.onFrameRateChange,
     });
 
     return <RCTCamera {... nativeProps} />
@@ -100,7 +111,9 @@ var RCTCamera = createReactIOSNativeComponentClass({
     aspect: true,
     type: true,
     orientation: true,
-    frameRate: true
+    frameRate: true,
+    maxDuration: true,
+    maxFileSize: true
   }),
   uiViewClassName: 'RCTCamera',
 });

@@ -24,7 +24,7 @@ extern NSString *const RNCameraEventFrameRateChange;
 @property (nonatomic) AVCaptureMovieFileOutput *movieFileOutput;
 @property (nonatomic) id runtimeErrorHandlingObserver;
 @property (nonatomic) NSInteger presetCamera;
-@property (nonatomic) float frameRate;
+@property (nonatomic) double frameRate;
 
 - (instancetype)initWithEventDispatcher:(RCTEventDispatcher *)eventDispatcher NS_DESIGNATED_INITIALIZER;
 
