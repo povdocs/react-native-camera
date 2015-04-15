@@ -10,6 +10,7 @@
 
 NSString *const RNCameraEventRecordStart = @"recordingStarted";
 NSString *const RNCameraEventRecordEnd = @"recordingEnded";
+NSString *const RNCameraEventRecordSaved = @"recordingSaved";
 NSString *const RNCameraEventFrameRateChange = @"frameRateChange";
 
 @implementation RCTCamera
@@ -479,14 +480,16 @@ NSString *const RNCameraEventFrameRateChange = @"frameRateChange";
     
     if (recordedSuccessfully) {
         NSLog(@"Recorded successfully, %f seconds, %lld bytes", CMTimeGetSeconds([captureOutput recordedDuration]), [captureOutput recordedFileSize]);
+        NSNumber *recordedSeconds = [NSNumber numberWithDouble:CMTimeGetSeconds([captureOutput recordedDuration])];
+        NSNumber *recordedBytes = [NSNumber numberWithLongLong:[captureOutput recordedFileSize]];
+
         [_eventDispatcher
          sendInputEventWithName:RNCameraEventRecordEnd
          body:@{
-                //todo: fill in data here. destination file name, maybe? duration
                 @"target": self.reactTag,
                 @"outputURL": [outputFileURL absoluteString],
-                @"duration": [captureOutput recordedDuration],
-                @"fileSize": [captureOutput recordedFileSize]
+                @"duration": recordedSeconds,
+                @"fileSize": recordedBytes
         }];
 
         ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
@@ -495,10 +498,19 @@ NSString *const RNCameraEventFrameRateChange = @"frameRateChange";
              {
                  if (error) {
                      //todo: handle write error
+                 } else {
+                     //todo: send event back to JS
+                     NSLog(@"File saved: %@", [assetURL absoluteString]);
+                     [_eventDispatcher
+                      sendInputEventWithName:RNCameraEventRecordSaved
+                      body:@{
+                             @"target": self.reactTag,
+                             @"outputURL": [outputFileURL absoluteString],
+                             @"assetURL": [assetURL absoluteString],
+                             @"duration": recordedSeconds,
+                             @"fileSize": recordedBytes
+                             }];
                  }
-                 
-                 //todo: send event back to JS
-                 NSLog(@"File saved: %@", [assetURL absoluteString]);
              }];
         }
     } else {

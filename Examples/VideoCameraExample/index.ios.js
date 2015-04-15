@@ -37,11 +37,12 @@ var VideoCameraExample = React.createClass({
             type={this.state.frontCamera ? 'Front' : 'Back'}
             orientation="PortraitUpsideDown"
             frameRate={this.state.frameRate}
-            style={{height: 300, width: 300, backgroundColor: 'blue'}}
+            style={{height: 200, width: 300, backgroundColor: 'blue'}}
             onRecordStart={this.recordStart}
             onRecordEnd={this.recordEnd}
+            onRecordSaved={this.recordSaved}
             onFrameRateChange={(evt) => console.log('onFrameRateChange', evt)}
-            maxDuration={20.2}
+            maxFileSize={20 * 1000 * 1000}
           />
         </View>
         <SwitchIOS
@@ -74,11 +75,14 @@ var VideoCameraExample = React.createClass({
   stop() {
     this.refs.cam.stopRecording();
   },
-  recordStart() {
-    console.log('started recording');
+  recordStart(event) {
+    console.log('started recording', event);
   },
-  recordEnd() {
-    console.log('stopped recording');
+  recordEnd(event) {
+    console.log('stopped recording', event);
+  },
+  recordSaved(event) {
+    console.log('recording saved', event);
   }
 });
 

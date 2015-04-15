@@ -6,6 +6,7 @@
 
 extern NSString *const RNCameraEventRecordStart;
 extern NSString *const RNCameraEventRecordEnd;
+extern NSString *const RNCameraEventRecordSaved;
 extern NSString *const RNCameraEventFrameRateChange;
 
 @class RCTCameraManager;

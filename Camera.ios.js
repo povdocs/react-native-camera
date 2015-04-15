@@ -17,9 +17,11 @@ var Camera = React.createClass({
     frameRate: PropTypes.number,
     maxDuration: React.PropTypes.number,
     maxFileSize: React.PropTypes.number,
+
     onRecordStart: PropTypes.func,
     onRecordEnd: PropTypes.func,
-    onFrameRateChange: PropTypes.func
+    onFrameRateChange: PropTypes.func,
+    onRecordSaved: PropTypes.func
   },
 
   mixins: [NativeMethodsMixin],
@@ -68,6 +70,7 @@ var Camera = React.createClass({
       onRecordStart: this.onRecordStart,
       onRecordEnd: this.onRecordEnd,
       onFrameRateChange: this.onFrameRateChange,
+      onRecordSaved: this.onRecordSaved
     });
 
     return <RCTCamera {... nativeProps} />
@@ -87,21 +90,27 @@ var Camera = React.createClass({
 
   // Events
 
-  onRecordStart: function onRecordStart(event) {
+  onRecordStart(event) {
     if (this.props.onRecordStart) {
       this.props.onRecordStart(event.nativeEvent);
     }
   },
 
-  onRecordEnd: function onRecordEnd(event) {
+  onRecordEnd(event) {
     if (this.props.onRecordEnd) {
       this.props.onRecordEnd(event.nativeEvent);
     }
   },
 
-  onFrameRateChange: function onFrameRateChange(event) {
+  onFrameRateChange(event) {
     if (this.props.onFrameRateChange) {
       this.props.onFrameRateChange(event.nativeEvent);
+    }
+  },
+
+  onRecordSaved(event) {
+    if (this.props.onRecordSaved) {
+      this.props.onRecordSaved(event.nativeEvent);
     }
   }
 });
