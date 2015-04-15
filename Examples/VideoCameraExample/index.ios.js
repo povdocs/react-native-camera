@@ -38,6 +38,9 @@ var VideoCameraExample = React.createClass({
             orientation="PortraitUpsideDown"
             frameRate={this.state.frameRate}
             style={{height: 300, width: 300, backgroundColor: 'blue'}}
+            onRecordStart={this.recordStart}
+            onRecordEnd={this.recordEnd}
+            onFrameRateChange={(evt) => console.log('onFrameRateChange', evt)}
           />
         </View>
         <SwitchIOS
@@ -69,6 +72,12 @@ var VideoCameraExample = React.createClass({
   },
   stop() {
     this.refs.cam.stopRecording();
+  },
+  recordStart() {
+    console.log('started recording');
+  },
+  recordEnd() {
+    console.log('stopped recording');
   }
 });
 

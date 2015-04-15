@@ -7,16 +7,18 @@
 
 @implementation RCTCameraManager
 
+@synthesize bridge = _bridge;
+
 - (UIView *)view
 {
-    [self setCurrentCamera:[[RCTCamera alloc] init]];
+    [self setCurrentCamera:[[RCTCamera alloc] initWithEventDispatcher:self.bridge.eventDispatcher]];
     return _currentCamera;
 }
 
 RCT_EXPORT_VIEW_PROPERTY(aspect, NSString);
 RCT_EXPORT_VIEW_PROPERTY(type, NSInteger);
 RCT_EXPORT_VIEW_PROPERTY(orientation, NSInteger);
-RCT_EXPORT_VIEW_PROPERTY(frameRate, float);
+RCT_EXPORT_VIEW_PROPERTY(frameRate, double);
 RCT_EXPORT_VIEW_PROPERTY(isRecording, NSString);
 
 - (NSDictionary *)constantsToExport
@@ -39,6 +41,22 @@ RCT_EXPORT_VIEW_PROPERTY(isRecording, NSString);
       }
     };
 }
+
+- (NSDictionary *)customDirectEventTypes
+{
+    return @{
+        RNCameraEventRecordStart: @{
+            @"registrationName": @"onRecordStart"
+        },
+        RNCameraEventRecordEnd: @{
+            @"registrationName": @"onRecordEnd"
+        },
+        RNCameraEventFrameRateChange: @{
+            @"registrationName": @"onFrameRateChange"
+        }
+    };
+}
+
 
 - (void)checkDeviceAuthorizationStatus:(RCTResponseSenderBlock) callback {
     RCT_EXPORT();

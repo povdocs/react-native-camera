@@ -14,7 +14,10 @@ var Camera = React.createClass({
     aspect: PropTypes.string,
     type: PropTypes.string,
     orientation: PropTypes.string,
-    frameRate: PropTypes.number
+    frameRate: PropTypes.number,
+    onRecordStart: PropTypes.func,
+    onRecordEnd: PropTypes.func,
+    onFrameRateChange: PropTypes.func
   },
 
   mixins: [NativeMethodsMixin],
@@ -50,7 +53,10 @@ var Camera = React.createClass({
       aspect: aspect,
       type: type,
       orientation: orientation,
-      frameRate: frameRate
+      frameRate: frameRate,
+      onRecordStart: this.onRecordStart,
+      onRecordEnd: this.onRecordEnd,
+      onFrameRateChange: this.onFrameRateChange
     });
 
     return <RCTCamera {... nativeProps} />
@@ -66,6 +72,26 @@ var Camera = React.createClass({
 
   stopRecording: function(cb) {
     NativeModules.CameraManager.stopRecording();
+  },
+
+  // Events
+
+  onRecordStart: function onRecordStart(event) {
+    if (this.props.onRecordStart) {
+      this.props.onRecordStart(event.nativeEvent);
+    }
+  },
+
+  onRecordEnd: function onRecordEnd(event) {
+    if (this.props.onRecordEnd) {
+      this.props.onRecordEnd(event.nativeEvent);
+    }
+  },
+
+  onFrameRateChange: function onFrameRateChange(event) {
+    if (this.props.onFrameRateChange) {
+      this.props.onFrameRateChange(event.nativeEvent);
+    }
   }
 });
 

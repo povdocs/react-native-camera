@@ -1,4 +1,5 @@
 #import "RCTBridge.h"
+#import "RCTEventDispatcher.h"
 #import "RCTCamera.h"
 #import "RCTCameraManager.h"
 #import "RCTLog.h"
@@ -7,7 +8,15 @@
 #import "UIImage+Resize.h"
 #import <AVFoundation/AVFoundation.h>
 
+NSString *const RNCameraEventRecordStart = @"recordingStarted";
+NSString *const RNCameraEventRecordEnd = @"recordingEnded";
+NSString *const RNCameraEventFrameRateChange = @"frameRateChange";
+
 @implementation RCTCamera
+{
+    /* Required to publish events */
+    RCTEventDispatcher *_eventDispatcher;
+}
 
 - (BOOL)getIsRecording
 {
@@ -34,7 +43,7 @@
     [self changeOrientation:orientation];
 }
 
-- (void)setFrameRate:(float)frameRate
+- (void)setFrameRate:(double)frameRate
 {
     _frameRate = frameRate;
     if ([[self session] isRunning] && !_isRecording) {
@@ -42,14 +51,14 @@
     }
 }
 
-- (float)getCurrentFrameRate
+- (double)getCurrentFrameRate
 {
     AVCaptureDeviceInput *input = [self captureDeviceInput];
     if (input != nil) {
         AVCaptureDevice *camera = [input device];
         if (camera != nil) {
-            float min = CMTimeGetSeconds(camera.activeVideoMinFrameDuration);
-            float max = CMTimeGetSeconds(camera.activeVideoMaxFrameDuration);
+            double min = CMTimeGetSeconds(camera.activeVideoMinFrameDuration);
+            double max = CMTimeGetSeconds(camera.activeVideoMaxFrameDuration);
             return 2.0 / (min + max);
         }
     }
@@ -57,11 +66,13 @@
     return _frameRate;
 }
 
-- (id)init
+- (instancetype)initWithEventDispatcher:(RCTEventDispatcher *)eventDispatcher
 {
     _isRecording = NO;
 
     if ((self = [super init])) {
+        _eventDispatcher = eventDispatcher;
+
         [self setViewfinder:[[ViewfinderView alloc] init]];
 
         [self setSession:[[AVCaptureSession alloc] init]];
@@ -175,7 +186,12 @@
     return;
 }
 
-- (void)changeFrameRate:(float)frameRate {
+- (void)removeFromSuperview
+{
+    _eventDispatcher = nil;
+}
+
+- (void)changeFrameRate:(double)frameRate {
     dispatch_async([self sessionQueue], ^{
         NSError *error;
         AVCaptureDevice *camera = [[self captureDeviceInput] device];
@@ -184,9 +200,9 @@
             return;
         }
 
-        float oldFrameRate = [self getCurrentFrameRate];
-        const float epsilon = 0.00002;
-        if (ABS(oldFrameRate - frameRate)) {
+        double oldFrameRate = [self getCurrentFrameRate];
+        const double epsilon = 0.00002;
+        if (ABS(oldFrameRate - frameRate) < epsilon) {
             //no need to go through all this business
             return;
         }
@@ -219,10 +235,16 @@
         camera.activeVideoMaxFrameDuration = frameDuration;
         camera.activeVideoMinFrameDuration = frameDuration;
 
-        float newFrameRate = 1.0 / CMTimeGetSeconds(frameDuration);
+        double newFrameRate = 1.0 / CMTimeGetSeconds(frameDuration);
+        //todo: use value of last event fired instead of oldFrameRate
         if (ABS(newFrameRate - oldFrameRate) > epsilon) {
             NSLog(@"Frame rate changed from %f to %f", oldFrameRate, newFrameRate);
-            //todo: fire frameRateChanged event
+            [_eventDispatcher
+             sendInputEventWithName:RNCameraEventFrameRateChange
+             body:@{
+                    @"target": self.reactTag,
+                    @"frameRate": [NSNumber numberWithDouble:frameRate]
+                    }];
         }
 
         [camera unlockForConfiguration];
@@ -315,6 +337,14 @@
     //todo: fire event
     _isRecording = YES;
 
+    //fire event
+    [_eventDispatcher
+     sendInputEventWithName:RNCameraEventRecordStart
+     body:@{
+            //todo: fill in data here. destination file name, maybe? misc camera config
+            @"target": self.reactTag
+            }];
+
     //create temporary url as recording destination
     //todo: get recording destination from a param
     NSString *outputPath = [[NSString alloc] initWithFormat:@"%@%s", NSTemporaryDirectory(), "@output.mov"];
@@ -322,7 +352,7 @@
     NSFileManager *fileManager = [NSFileManager defaultManager];
     if ([fileManager fileExistsAtPath:outputPath]) {
         NSError *error;
-        if ([fileManager removeItemAtPath:outputPath error:&error] ==NO) {
+        if ([fileManager removeItemAtPath:outputPath error:&error] == NO) {
             //todo: handle error if necessary
         }
     }
@@ -425,6 +455,13 @@
     }
     
     if (recordedSuccessfully) {
+        [_eventDispatcher
+         sendInputEventWithName:RNCameraEventRecordEnd
+         body:@{
+                //todo: fill in data here. destination file name, maybe? duration
+                @"target": self.reactTag
+        }];
+
         ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
         if ([library videoAtPathIsCompatibleWithSavedPhotosAlbum:outputFileURL]) {
             [library writeVideoAtPathToSavedPhotosAlbum:outputFileURL completionBlock:^(NSURL *assetURL, NSError *error)
@@ -436,6 +473,8 @@
                  //todo: send event back to JS
              }];
         }
+    } else {
+        //todo: fire error event?
     }
 }
 

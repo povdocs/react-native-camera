@@ -4,7 +4,12 @@
 #import "ViewfinderView.h"
 #import "UIView+React.h"
 
+extern NSString *const RNCameraEventRecordStart;
+extern NSString *const RNCameraEventRecordEnd;
+extern NSString *const RNCameraEventFrameRateChange;
+
 @class RCTCameraManager;
+@class RCTEventDispatcher;
 
 @interface RCTCamera : UIView
     <AVCaptureFileOutputRecordingDelegate>
@@ -20,6 +25,8 @@
 @property (nonatomic) id runtimeErrorHandlingObserver;
 @property (nonatomic) NSInteger presetCamera;
 @property (nonatomic) float frameRate;
+
+- (instancetype)initWithEventDispatcher:(RCTEventDispatcher *)eventDispatcher NS_DESIGNATED_INITIALIZER;
 
 - (void)changeCamera:(NSInteger)camera;
 - (void)changeOrientation:(NSInteger)orientation;
