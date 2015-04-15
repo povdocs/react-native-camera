@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>5E63CB0F-0017-455D-BCDF-21D4126A1501</string>
+	<key>IDESourceControlProjectName</key>
+	<string>VideoCameraExample</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>017016882008F563B6B7378B6B5F813AF74CB888</key>
+		<string>github.com:povdocs/react-native-camera.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>Examples/VideoCameraExample/VideoCameraExample.xcodeproj</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>017016882008F563B6B7378B6B5F813AF74CB888</key>
+		<string>../../../..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>github.com:povdocs/react-native-camera.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>111</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>017016882008F563B6B7378B6B5F813AF74CB888</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>017016882008F563B6B7378B6B5F813AF74CB888</string>
+			<key>IDESourceControlWCCName</key>
+			<string>react-native-camera</string>
+		</dict>
+	</array>
+</dict>
+</plist>
