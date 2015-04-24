@@ -5,7 +5,6 @@ A camera viewport for React Native. This module is currently in the very early s
 ## Known Issues
 Below is a list of known issues. Pull requests are welcome for any of these issues!
 
-- `takePicture()` crashes on `react-native >= 0.3.5`
 - [Camera module may cause app to crash in simulator](https://github.com/lwansbrough/react-native-camera/issues/8)
 
 ## Getting started
@@ -82,6 +81,11 @@ The `orientation` property allows you to specify the current orientation of the 
 
 TODO: Add support for an `Auto` value to automatically adjust for orientation changes.
 
+#### `onBarCodeRead`
+
+Will call the specified method when a barcode is detected in the camera's view.
+
+Event contains `data` (the data in the barcode) and `bounds` (the rectangle which outlines the barcode.)
 
 ## Component methods
 
